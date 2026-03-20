@@ -15,6 +15,9 @@ This repository covers the Python fundamentals you need to work confidently as a
 Each lesson includes:
 - 📖 `theory.md` — theory, concepts and inline code examples.
 - 💻 `exercises.py` — practical exercises to reinforce what you learned.
+- ✅ `solutions.py` — reference solutions for each exercise.
+
+> **Note on notebooks:** `01_introduction` includes an `exercises.ipynb` as a reference to show how Jupyter notebooks work. All lessons use `.py` files as the primary format.
 
 ---
 
@@ -72,6 +75,8 @@ Completing this repository gives you access to:
    ```
 
 2. Go through each lesson in order — read `theory.md` first, then work through `exercises.py`.
+
+3. Check your solutions against `solutions.py` once you've attempted each exercise.
 
 ---
 
