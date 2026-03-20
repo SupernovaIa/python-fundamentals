@@ -142,6 +142,20 @@ uv remove requests
 uv remove --dev ruff
 ```
 
+### Update dependencies
+
+```bash
+# Update a specific package to its latest compatible version
+uv add --upgrade requests
+
+# Update all packages
+uv lock --upgrade
+
+# Inspect a specific package
+uv pip show requests    # version, location, dependencies
+uv pip list             # all installed packages
+```
+
 ### Sync — install everything from pyproject.toml
 
 ```bash
@@ -290,9 +304,52 @@ git commit -m "add requests dependency"
 
 Never commit the virtual environment itself — it is large (hundreds of MB), platform-specific and always reproducible from `pyproject.toml` + `uv.lock`.
 
-> This repository already includes a `.gitignore` configured for Python projects — check the root of this repo as a reference.
+Create a `.gitignore` file at the project root:
 
-For new projects, create a `.gitignore` at the project root. GitHub provides a Python template — use it as a starting point, or base it on the one in this repo.
+```gitignore
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# Distribution and packaging
+dist/
+build/
+*.egg-info/
+*.egg
+
+# Type checker
+.mypy_cache/
+.pyright/
+.ruff_cache/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Environment variables (never commit secrets)
+.env
+.env.local
+.env.*.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/settings.json
+.idea/
+```
+
+GitHub provides a Python `.gitignore` template — use it as a starting point.
 
 ### What to always commit
 
@@ -318,8 +375,24 @@ For new projects, create a `.gitignore` at the project root. GitHub provides a P
 uv pip install -r requirements.txt
 
 # Or migrate to pyproject.toml:
-uv init
-# then manually add dependencies from requirements.txt using uv add
+uv init --name my-project .
+uv add -r requirements.txt   # adds all packages to pyproject.toml
+```
+
+### Migrating from a venv + pip project
+
+```bash
+cd existing-project
+
+# Activate the old venv to get the package list
+source .venv/bin/activate
+pip freeze > old-requirements.txt
+deactivate
+
+# Initialise uv and migrate
+uv init --name my-project .
+uv add -r old-requirements.txt
+rm old-requirements.txt
 ```
 
 ### Generating requirements.txt from uv
@@ -384,6 +457,35 @@ error: package 'library-a' requires 'requests<2', but 'library-b' requires 'requ
 - Use a compatibility layer or find an alternative package.
 - Pin the conflicting package to a version that satisfies both.
 
+```bash
+# Try upgrading all packages — often resolves conflicts
+uv lock --upgrade
+uv sync
+```
+
+### Corrupted virtual environment
+
+If the `.venv` becomes corrupted or behaves unexpectedly, delete it and recreate:
+
+```bash
+rm -rf .venv        # macOS/Linux
+rmdir /s .venv      # Windows
+
+uv sync             # recreates .venv from uv.lock exactly
+```
+
+### uv command not found after installation
+
+Restart your terminal. If it persists, add uv to your PATH:
+
+```bash
+# macOS/Linux — add to ~/.bashrc or ~/.zshrc
+export PATH="$HOME/.local/bin:$PATH"
+
+# Then reload
+source ~/.zshrc
+```
+
 ### Forgot to commit uv.lock
 
 If a colleague gets different package versions, they probably have a stale `uv.lock`. Fix:
@@ -433,7 +535,56 @@ uv run python main.py
 
 ---
 
-## Summary
+## Cheat sheet
+
+```bash
+# NEW PROJECT
+uv init my-project
+cd my-project
+uv add requests pandas openai
+uv add --dev ruff pytest pre-commit
+uv run python main.py
+
+# EXISTING PROJECT (after clone or pull)
+git clone repo && cd repo
+uv sync --dev
+uv run python main.py
+
+# DAILY PACKAGE MANAGEMENT
+uv add package              # add runtime dependency
+uv add --dev package        # add dev dependency
+uv remove package           # remove dependency
+uv add --upgrade package    # update one package
+uv lock --upgrade           # update all packages
+uv pip list                 # list installed packages
+uv pip show package         # inspect a package
+
+# RUNNING CODE
+uv run python script.py     # run a script
+uv run pytest               # run tests
+uv run ruff check .         # run a tool
+
+# PYTHON VERSION MANAGEMENT
+uv python install 3.12      # install a Python version
+uv python pin 3.12          # pin version for this project
+uv python list              # list available versions
+
+# GLOBAL TOOLS
+uv tool install ruff        # install globally
+uvx ruff check .            # run without installing
+
+# LEGACY COMPATIBILITY
+uv pip install -r requirements.txt           # install from requirements.txt
+uv pip compile pyproject.toml -o req.txt     # generate requirements.txt
+
+# TROUBLESHOOTING
+rm -rf .venv && uv sync     # recreate corrupted environment
+uv lock --upgrade && uv sync # resolve conflicts with newer versions
+```
+
+---
+
+
 
 - **Virtual environments** isolate each project's dependencies — one `.venv` per project.
 - **The old way**: `python -m venv` + `pip` + `requirements.txt` — still found in legacy projects.
